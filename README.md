@@ -70,7 +70,7 @@ See the example configuration files in the `config_examples` directory for more 
 
 ## Log Monitoring
 
-HWD can monitor logs of dummy services for successful login attempts. Configure the `log_monitoring` section for each dummy service in the configuration file:
+HMD can monitor logs of dummy services for successful login attempts. Configure the `log_monitoring` section for each dummy service in the configuration file:
 
 ```yaml
 log_monitoring:
