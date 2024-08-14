@@ -1,0 +1,54 @@
+password_list_url: "https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt"
+network_name: "wordpress_network"
+production_port_range:
+  start: 30000
+  end: 40000
+production_update_interval: 30  # minutes
+dummy_recycle_interval: 60  # minutes
+
+main_services:
+  - name: wordpress_db
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: strong_password_here
+      MYSQL_DATABASE: wordpress_db
+      MYSQL_USER: wordpress_user
+      MYSQL_PASSWORD: strong_password_here
+    volumes:
+      production_db: /var/lib/mysql
+  - name: wordpress
+    image: wordpress:latest
+    ports:
+      - 80
+    environment:
+      WORDPRESS_DB_HOST: wordpress_db
+      WORDPRESS_DB_USER: wordpress_user
+      WORDPRESS_DB_PASSWORD: strong_password_here
+      WORDPRESS_DB_NAME: wordpress_db
+    volumes:
+      production_wp: /var/www/html
+
+dummy_services:
+  - name: dummy_mariadb
+    image: mariadb:latest
+    min_instances: 3
+    max_instances: 7
+    port_range:
+      start: 10000
+      end: 20000
+    environment:
+      MYSQL_ROOT_PASSWORD: "{password}"
+      MYSQL_USER: "{username}"
+      MYSQL_PASSWORD: "{password}"
+      MYSQL_DATABASE: dummy_db
+    volumes:
+      dummy: /var/lib/mysql
+    log_monitoring:
+      log_file: /var/log/mysql/general.log
+      success_pattern: "Access granted for user '(.+?)'@'(.+?)'"
+      check_interval: 30  # seconds
+
+volumes:
+  production_wp: "./data/wordpress"
+  production_db: "./data/mariadb"
+  dummy: "./data/dummy"

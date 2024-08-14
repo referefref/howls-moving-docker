@@ -1,0 +1,51 @@
+password_list_url: "https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt"
+network_name: "nginx_php_network"
+production_port_range:
+  start: 33000
+  end: 43000
+production_update_interval: 55  # minutes
+dummy_recycle_interval: 65  # minutes
+
+main_services:
+  - name: nginx
+    image: nginx:latest
+    ports:
+      - 80
+    volumes:
+      nginx_conf: /etc/nginx/conf.d
+      web_root: /var/www/html
+  - name: php_fpm
+    image: php:8-fpm
+    volumes:
+      web_root: /var/www/html
+
+dummy_services:
+  - name: dummy_apache
+    image: httpd:2.4
+    min_instances: 2
+    max_instances: 4
+    port_range:
+      start: 13000
+      end: 18000
+    log_monitoring:
+      log_file: /var/log/apache2/access.log
+      success_pattern: "\"POST /login\" 200 \\d+ \"(.+?)\" \"(.+?)\""
+      check_interval: 30  # seconds
+  - name: dummy_ftp
+    image: fauria/vsftpd
+    min_instances: 1
+    max_instances: 3
+    port_range:
+      start: 20000
+      end: 21000
+    environment:
+      FTP_USER: "{username}"
+      FTP_PASS: "{password}"
+    log_monitoring:
+      log_file: /var/log/vsftpd.log
+      success_pattern: "OK LOGIN: Client \"(.+?)\", \"(.+?)\""
+      check_interval: 25  # seconds
+
+volumes:
+  nginx_conf: "./data/nginx/conf"
+  web_root: "./data/www"

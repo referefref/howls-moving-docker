@@ -1,0 +1,63 @@
+password_list_url: "https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt"
+network_name: "drupal_network"
+production_port_range:
+  start: 35000
+  end: 45000
+production_update_interval: 45  # minutes
+dummy_recycle_interval: 75  # minutes
+
+main_services:
+  - name: drupal
+    image: drupal:9
+    ports:
+      - 80
+    volumes:
+      drupal_modules: /var/www/html/modules
+      drupal_profiles: /var/www/html/profiles
+      drupal_themes: /var/www/html/themes
+      drupal_sites: /var/www/html/sites
+  - name: mariadb
+    image: mariadb:10.5
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: drupal
+      MYSQL_USER: drupal
+      MYSQL_PASSWORD: drupalpassword
+    volumes:
+      mariadb_data: /var/lib/mysql
+
+dummy_services:
+  - name: dummy_mariadb
+    image: mariadb:10.5
+    min_instances: 2
+    max_instances: 5
+    port_range:
+      start: 15000
+      end: 20000
+    environment:
+      MYSQL_ROOT_PASSWORD: "{password}"
+      MYSQL_DATABASE: dummy_db
+      MYSQL_USER: "{username}"
+      MYSQL_PASSWORD: "{password}"
+    log_monitoring:
+      log_file: /var/log/mysql/general.log
+      success_pattern: "Access granted for user '(.+?)'@'(.+?)'"
+      check_interval: 30  # seconds
+  - name: dummy_memcached
+    image: memcached:latest
+    min_instances: 1
+    max_instances: 3
+    port_range:
+      start: 20001
+      end: 25000
+    log_monitoring:
+      log_file: null
+      success_pattern: null
+      check_interval: null
+
+volumes:
+  drupal_modules: "./data/drupal/modules"
+  drupal_profiles: "./data/drupal/profiles"
+  drupal_themes: "./data/drupal/themes"
+  drupal_sites: "./data/drupal/sites"
+  mariadb_data: "./data/mariadb"

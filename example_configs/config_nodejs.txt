@@ -1,0 +1,38 @@
+password_list_url: "https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt"
+network_name: "nodejs_network"
+production_port_range:
+  start: 32000
+  end: 42000
+production_update_interval: 40  # minutes
+dummy_recycle_interval: 70  # minutes
+
+main_services:
+  - name: nodejs_app
+    image: node:14
+    ports:
+      - 3000
+    environment:
+      MONGODB_URI: "mongodb://mongodb:27017/myapp"
+    volumes:
+      app_code: /app
+  - name: mongodb
+    image: mongo:4.4
+    volumes:
+      mongodb_data: /data/db
+
+dummy_services:
+  - name: dummy_redis
+    image: redis:latest
+    min_instances: 2
+    max_instances: 4
+    port_range:
+      start: 12000
+      end: 17000
+    log_monitoring:
+      log_file: null
+      success_pattern: null
+      check_interval: null
+
+volumes:
+  app_code: "./data/nodejs/app"
+  mongodb_data: "./data/mongodb"

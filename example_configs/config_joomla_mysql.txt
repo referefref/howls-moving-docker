@@ -1,0 +1,62 @@
+password_list_url: "https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt"
+network_name: "joomla_network"
+production_port_range:
+  start: 36000
+  end: 46000
+production_update_interval: 55  # minutes
+dummy_recycle_interval: 85  # minutes
+
+main_services:
+  - name: joomla
+    image: joomla:3
+    ports:
+      - 80
+    environment:
+      JOOMLA_DB_HOST: mysql
+      JOOMLA_DB_PASSWORD: joomlapassword
+    volumes:
+      joomla_data: /var/www/html
+  - name: mysql
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: joomla
+      MYSQL_USER: joomla
+      MYSQL_PASSWORD: joomlapassword
+    volumes:
+      mysql_data: /var/lib/mysql
+
+dummy_services:
+  - name: dummy_mysql
+    image: mysql:5.7
+    min_instances: 2
+    max_instances: 4
+    port_range:
+      start: 16000
+      end: 21000
+    environment:
+      MYSQL_ROOT_PASSWORD: "{password}"
+      MYSQL_DATABASE: dummy_db
+      MYSQL_USER: "{username}"
+      MYSQL_PASSWORD: "{password}"
+    log_monitoring:
+      log_file: /var/log/mysql/general.log
+      success_pattern: "Access granted for user '(.+?)'@'(.+?)'"
+      check_interval: 30  # seconds
+  - name: dummy_phpmyadmin
+    image: phpmyadmin/phpmyadmin
+    min_instances: 1
+    max_instances: 3
+    port_range:
+      start: 21001
+      end: 26000
+    environment:
+      PMA_ARBITRARY: 1
+    log_monitoring:
+      log_file: /var/log/apache2/access.log
+      success_pattern: "\"POST /index.php\" 302 \\d+ \"(.+?)\" \"(.+?)\""
+      check_interval: 25  # seconds
+
+volumes:
+  joomla_data: "./data/joomla"
+  mysql_data: "./data/mysql"

@@ -1,0 +1,54 @@
+password_list_url: "https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt"
+network_name: "elk_network"
+production_port_range:
+  start: 34000
+  end: 44000
+production_update_interval: 60  # minutes
+dummy_recycle_interval: 80  # minutes
+
+main_services:
+  - name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.14.0
+    environment:
+      - discovery.type=single-node
+    volumes:
+      es_data: /usr/share/elasticsearch/data
+  - name: logstash
+    image: docker.elastic.co/logstash/logstash:7.14.0
+    volumes:
+      logstash_config: /usr/share/logstash/pipeline
+  - name: kibana
+    image: docker.elastic.co/kibana/kibana:7.14.0
+    ports:
+      - 5601
+
+dummy_services:
+  - name: dummy_elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.14.0
+    min_instances: 1
+    max_instances: 3
+    port_range:
+      start: 14000
+      end: 19000
+    environment:
+      - discovery.type=single-node
+      - ELASTIC_PASSWORD: "{password}"
+    log_monitoring:
+      log_file: /var/log/elasticsearch/elasticsearch.log
+      success_pattern: "Authentication successful for user \\[(.+?)\\] from \\[(.+?)\\]"
+      check_interval: 35  # seconds
+  - name: dummy_redis
+    image: redis:latest
+    min_instances: 2
+    max_instances: 4
+    port_range:
+      start: 19001
+      end: 24000
+    log_monitoring:
+      log_file: null
+      success_pattern: null
+      check_interval: null
+
+volumes:
+  es_data: "./data/elasticsearch"
+  logstash_config: "./data/logstash"

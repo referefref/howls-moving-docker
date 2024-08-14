@@ -1,0 +1,60 @@
+password_list_url: "https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt"
+network_name: "gitlab_network"
+production_port_range:
+  start: 31000
+  end: 41000
+production_update_interval: 45  # minutes
+dummy_recycle_interval: 75  # minutes
+
+main_services:
+  - name: gitlab
+    image: gitlab/gitlab-ce:latest
+    ports:
+      - 80
+      - 22
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://gitlab.example.com'
+        gitlab_rails['gitlab_shell_ssh_port'] = 22
+    volumes:
+      gitlab_config: /etc/gitlab
+      gitlab_logs: /var/log/gitlab
+      gitlab_data: /var/opt/gitlab
+
+dummy_services:
+  - name: dummy_postgres
+    image: postgres:13
+    min_instances: 2
+    max_instances: 5
+    port_range:
+      start: 11000
+      end: 16000
+    environment:
+      POSTGRES_PASSWORD: "{password}"
+    volumes:
+      dummy: /var/lib/postgresql/data
+    log_monitoring:
+      log_file: /var/log/postgresql/postgresql.log
+      success_pattern: "authentication succeeded for user \"(.+?)\" from (.+?):"
+      check_interval: 25  # seconds
+  - name: dummy_ssh
+    image: linuxserver/openssh-server:latest
+    min_instances: 1
+    max_instances: 3
+    port_range:
+      start: 20001
+      end: 25000
+    environment:
+      PASSWORD_ACCESS: "true"
+      USER_NAME: "{username}"
+      USER_PASSWORD: "{password}"
+    log_monitoring:
+      log_file: /var/log/auth.log
+      success_pattern: "Accepted password for (.+?) from (.+?) port"
+      check_interval: 20  # seconds
+
+volumes:
+  gitlab_config: "./data/gitlab/config"
+  gitlab_logs: "./data/gitlab/logs"
+  gitlab_data: "./data/gitlab/data"
+  dummy: "./data/dummy"

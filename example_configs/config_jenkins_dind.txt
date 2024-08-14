@@ -1,0 +1,51 @@
+password_list_url: "https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt"
+network_name: "jenkins_network"
+production_port_range:
+  start: 37000
+  end: 47000
+production_update_interval: 65  # minutes
+dummy_recycle_interval: 95  # minutes
+
+main_services:
+  - name: jenkins
+    image: jenkins/jenkins:lts
+    ports:
+      - 8080
+    volumes:
+      jenkins_home: /var/jenkins_home
+  - name: docker_dind
+    image: docker:dind
+    privileged: true
+    volumes:
+      docker_certs: /certs/client
+
+dummy_services:
+  - name: dummy_jenkins
+    image: jenkins/jenkins:lts
+    min_instances: 1
+    max_instances: 3
+    port_range:
+      start: 17000
+      end: 22000
+    volumes:
+      dummy_jenkins_home: /var/jenkins_home
+    log_monitoring:
+      log_file: /var/log/jenkins/jenkins.log
+      success_pattern: "User (.+?) logged in from (.+)"
+      check_interval: 40  # seconds
+  - name: dummy_gitea
+    image: gitea/gitea:latest
+    min_instances: 1
+    max_instances: 2
+    port_range:
+      start: 22001
+      end: 27000
+    log_monitoring:
+      log_file: /app/gitea/log/gitea.log
+      success_pattern: "New authentication attempt from (.+?) for user (.+?)"
+      check_interval: 35  # seconds
+
+volumes:
+  jenkins_home: "./data/jenkins"
+  docker_certs: "./data/docker_certs"
+  dummy_jenkins_home: "./data/dummy_jenkins"
