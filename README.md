@@ -1,7 +1,6 @@
-# HowlsMovingDocker (HWD)
+# HowlsMovingDocker (HMD)
 
 Version: 1.0
-GitHub: https://github.com/referefref/howls-moving-docker/
 
 HowlsMovingDocker is a moving target defense Docker orchestration platform that creates a dynamic environment for your main application and dummy services. It continuously changes the network topology to enhance security and resilience against potential attacks.
 
@@ -39,19 +38,19 @@ HowlsMovingDocker is a moving target defense Docker orchestration platform that 
 Run the main script with your chosen configuration file:
 
 ```
-python hwd.py config_wordpress.yaml
+python hmd.py config_wordpress.yaml
 ```
 
 For help and to see all available options:
 
 ```
-python hwd.py --help
+python hmd.py --help
 ```
 
 To check the version:
 
 ```
-python hwd.py --version
+python hmd.py --version
 ```
 
 ## Configuration
