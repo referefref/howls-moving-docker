@@ -1,14 +1,16 @@
-# HowlsMovingDocker
+# HowlsMovingDocker (HWD)
+
+Version: 1.0
+GitHub: https://github.com/referefref/howls-moving-docker/
 
 HowlsMovingDocker is a moving target defense Docker orchestration platform that creates a dynamic environment for your main application and dummy services. It continuously changes the network topology to enhance security and resilience against potential attacks.
 
 ## Features
 
-- Deploys a main application with its required services (e.g., WordPress with MariaDB, GitLab)
+- Deploys main application services with dynamically changing ports
 - Creates multiple dummy instances with weak credentials
 - Periodically recycles dummy instances, changing their ports and credentials
-- Dynamically updates ports for production services to create a moving target
-- Implements load balancing to ensure no downtime during port changes
+- Monitors authentication logs in dummy containers to detect successful login attempts
 - Highly configurable through YAML files
 - Uses volume mapping for data persistence
 
@@ -21,8 +23,8 @@ HowlsMovingDocker is a moving target defense Docker orchestration platform that 
 
 1. Clone this repository:
    ```
-   git clone https://github.com/yourusername/HowlsMovingDocker.git
-   cd HowlsMovingDocker
+   git clone https://github.com/referefref/howls-moving-docker.git
+   cd howls-moving-docker
    ```
 
 2. Install the required Python packages:
@@ -32,69 +34,53 @@ HowlsMovingDocker is a moving target defense Docker orchestration platform that 
 
 3. Ensure Docker is installed and running on your system.
 
-## Configuration
-
-Edit the YAML configuration file to customize the behavior of HowlsMovingDocker. You can configure:
-
-- Password list URL
-- Main services (e.g., WordPress, GitLab)
-- Dummy services (e.g., MariaDB, PostgreSQL)
-- Production port range and update interval
-- Number of dummy instances, port ranges, and recycle intervals
-- Volume mappings
-
-Example configurations are provided for WordPress (`config_wordpress.yaml`) and GitLab (`config_gitlab.yaml`).
-
 ## Usage
 
 Run the main script with your chosen configuration file:
 
 ```
-python howls_moving_docker.py config_wordpress.yaml
+python hwd.py config_wordpress.yaml
 ```
 
-or
+For help and to see all available options:
 
 ```
-python howls_moving_docker.py config_gitlab.yaml
+python hwd.py --help
 ```
 
-This will:
-1. Download the specified password list
-2. Create the main application containers with random ports
-3. Create the specified number of dummy instances
-4. Periodically recycle the dummy instances
-5. Regularly update the ports of the main application containers
+To check the version:
 
-To stop the script, use Ctrl+C. This will gracefully shut down all containers.
+```
+python hwd.py --version
+```
 
-## Moving Target Defense
+## Configuration
 
-HowlsMovingDocker implements a moving target defense strategy by:
+Edit the YAML configuration file to customize the behavior of HowlsMovingDocker. Key configuration options include:
 
-1. Randomly assigning ports to the main application containers within a specified range
-2. Periodically updating these ports to new random values
-3. Implementing a hot-swap mechanism to ensure no downtime during port changes
-4. Creating and recycling dummy instances to add noise and confusion for potential attackers
+- `password_list_url`: URL to download the password list for dummy services
+- `network_name`: Name of the Docker network to create
+- `production_port_range`: Range of ports for main services
+- `production_update_interval`: Interval (in minutes) to update main service ports
+- `dummy_recycle_interval`: Interval (in minutes) to recycle dummy containers
+- `main_services`: List of main services to deploy
+- `dummy_services`: List of dummy services to deploy, including log monitoring settings
+- `volumes`: Volume mappings for all services
 
-This approach makes it more difficult for attackers to maintain a consistent understanding of the network topology and target specific services.
+See the example configuration files in the `config_examples` directory for more details.
 
-## Extending for Other Applications
+## Log Monitoring
 
-To use HowlsMovingDocker with other applications:
+HWD can monitor logs of dummy services for successful login attempts. Configure the `log_monitoring` section for each dummy service in the configuration file:
 
-1. Create a new YAML configuration file based on the provided examples.
-2. Define the main services for your application, including image, ports, environment variables, and volumes.
-3. Define the dummy services you want to create, such as databases or caching services.
-4. Adjust the volume mappings as needed for your application.
-5. Configure the production port range and update interval to suit your needs.
+```yaml
+log_monitoring:
+  log_file: /path/to/log/file
+  success_pattern: "regex pattern to match successful logins"
+  check_interval: 30  # seconds
+```
 
-Examples of other applications you could implement:
-
-- Joomla with MySQL
-- Drupal with PostgreSQL
-- Node.js application with MongoDB
-- Ruby on Rails application with Redis and PostgreSQL
+If log monitoring is not applicable for a service, set these fields to `null`.
 
 ## Warning
 
